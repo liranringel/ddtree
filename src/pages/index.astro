@@ -1,0 +1,188 @@
+---
+import Layout from "../layouts/Layout.astro";
+import FigureOverview from "../components/FigureOverview.astro";
+import ProcessAnimation from "../components/ProcessAnimation.astro";
+import { getFigureOverviewEntries } from "../lib/results";
+import { siteMeta } from "../lib/site";
+
+const figureEntries = getFigureOverviewEntries();
+---
+
+<Layout title="DDTree" description={siteMeta.description}>
+  <section class="hero" id="top">
+    <div class="container hero-layout">
+      <div class="hero-copy">
+        <h1>DDTree</h1>
+        <p class="hero-title">Accelerating Speculative Decoding with Block Diffusion Draft Trees</p>
+        <p class="hero-summary">
+          DDTree (Diffusion Draft Tree) builds a draft tree from one block diffusion pass, then verifies the whole tree in one target-model forward pass.
+        </p>
+        <div class="hero-actions">
+          <a class="button arxiv" href="https://arxiv.org/" target="_blank" rel="noreferrer">
+            <img
+              class="button-logo arxiv-logo"
+              src={`${import.meta.env.BASE_URL}assets/logos/arxiv-logo-color.png`}
+              alt="arXiv"
+              loading="lazy"
+            />
+            <span>Paper</span>
+          </a>
+          <a class="button github" href={siteMeta.repoUrl} target="_blank" rel="noreferrer">
+            <svg class="button-icon github-mark" viewBox="0 0 16 16" aria-hidden="true">
+              <path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 0 0 5.47 7.59c.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.5-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82A7.63 7.63 0 0 1 8 4.87c.68 0 1.37.09 2.01.27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z" fill="currentColor"></path>
+            </svg>
+            <span>Code</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--comparison" id="comparison">
+    <div class="container">
+      <div class="section-head">
+        <h2>Side by side speed comparison</h2>
+        <p>
+          Autoregressive decoding, DFlash, and DDTree run on the same prompt, with the lower DDTree verification panel showing the draft tree and accepted path.
+        </p>
+      </div>
+      <figure class="comparison-video-shell">
+        <video
+          class="comparison-video"
+          data-comparison-video
+          autoplay
+          muted
+          loop
+          playsinline
+          controls
+          poster={`${import.meta.env.BASE_URL}assets/project/comparison-example-poster.png`}
+          preload="auto"
+        >
+          <source src={`${import.meta.env.BASE_URL}assets/project/comparison-example.mp4`} type="video/mp4" />
+        </video>
+        <div class="comparison-video-toolbar" aria-label="Comparison video controls">
+          <span class="comparison-video-speed-label">Slow</span>
+          <input
+            class="comparison-video-speed-slider"
+            type="range"
+            min="0.0625"
+            max="1"
+            step="any"
+            value="1"
+            data-video-speed-slider
+            aria-label="Comparison video playback speed"
+          />
+          <span class="comparison-video-speed-label">1x</span>
+        </div>
+      </figure>
+    </div>
+  </section>
+
+  <section class="section section--process" id="process">
+    <div class="container">
+      <div class="section-head">
+        <h2>One DDTree decoding round</h2>
+        <p>
+          A single round starts from the previous bonus token, builds a draft tree, verifies it with one forward pass, and carries the next bonus token forward.
+        </p>
+      </div>
+      <ProcessAnimation />
+    </div>
+  </section>
+
+  <section class="section section--figure" id="figure">
+    <div class="container">
+      <FigureOverview entries={figureEntries} />
+    </div>
+  </section>
+
+  <section class="section section--method" id="method">
+    <div class="container">
+      <div class="section-head">
+        <h2>How DDTree works</h2>
+      </div>
+      <div class="copy-block">
+        <p>
+          Vanilla DFlash already delivers strong acceptance lengths and speedups while keeping drafting cheap by predicting a block in one diffusion pass, but it still verifies only one drafted trajectory per round, so most of that output is never used. DDTree instead uses the drafter's per-position predictions to build a tree of likely continuations rather than collapsing them into a single path.
+        </p>
+        <p>
+          At each round, DDTree builds a draft tree under a fixed node budget, choosing the branches that look most promising. The target model then verifies the whole tree in one forward pass with tree attention.
+        </p>
+        <p>
+          The procedure remains lossless: the target model uses its own decoding rule, so DDTree preserves exactly the target model's output distribution. The verifier walks as long as the chosen token matches a child in the tree and commits the matched prefix. When the walk leaves the tree, DDTree stops and carries the first unmatched target token into the next round as the new bonus token.
+        </p>
+      </div>
+      <div class="result-figure-grid">
+        <figure class="result-figure">
+          <img
+            src={`${import.meta.env.BASE_URL}assets/project/math500-budget-tradeoff.png`}
+            alt="Budget tradeoff plot on Math500"
+            loading="lazy"
+          />
+          <figcaption>
+            <strong>Budget tradeoff</strong>
+            <p>
+              On MATH-500, acceptance length rises steadily as the DDTree node budget grows, but speedup peaks at an intermediate budget once verifier cost becomes dominant.
+            </p>
+          </figcaption>
+        </figure>
+        <figure class="result-figure">
+          <img
+            src={`${import.meta.env.BASE_URL}assets/project/math500-acceptance-histogram.png`}
+            alt="Acceptance histogram on MATH-500"
+            loading="lazy"
+          />
+          <figcaption>
+            <strong>Acceptance histogram</strong>
+            <p>
+              On MATH-500, DDTree shifts mass toward longer accepted prefixes, making short acceptances rarer and full-block acceptances substantially more common.
+            </p>
+          </figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+</Layout>
+
+<script is:inline>
+  for (const video of document.querySelectorAll("[data-comparison-video]")) {
+    const shell = video.closest(".comparison-video-shell");
+    const speedSlider = shell?.querySelector("[data-video-speed-slider]");
+
+    const ensurePlayback = () => {
+      video.muted = true;
+      const maybePromise = video.play();
+      if (maybePromise && typeof maybePromise.catch === "function") {
+        maybePromise.catch(() => {});
+      }
+    };
+
+    const updateSliderFill = () => {
+      if (!speedSlider) return;
+      const min = Number(speedSlider.min);
+      const max = Number(speedSlider.max);
+      const value = Number(speedSlider.value);
+      const progress = ((value - min) / (max - min)) * 100;
+      speedSlider.style.setProperty("--slider-progress", `${progress}%`);
+    };
+
+    const setSpeed = (speed) => {
+      video.playbackRate = speed;
+      if (speedSlider) {
+        speedSlider.value = String(speed);
+        updateSliderFill();
+      }
+    };
+
+    ensurePlayback();
+    video.addEventListener("loadedmetadata", ensurePlayback, { once: true });
+    setSpeed(1);
+
+    speedSlider?.addEventListener("input", () => {
+      setSpeed(Number(speedSlider.value));
+      ensurePlayback();
+    });
+
+    updateSliderFill();
+  }
+</script>

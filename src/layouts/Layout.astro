@@ -1,0 +1,36 @@
+---
+import "../styles/global.css";
+import { siteMeta } from "../lib/site";
+
+type Props = {
+  title?: string;
+  description?: string;
+};
+
+const { title, description = siteMeta.description } = Astro.props;
+const pageTitle = title ? `${title} | ${siteMeta.title}` : `${siteMeta.title} | Research Project`;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{pageTitle}</title>
+    <meta name="description" content={description} />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={Astro.url.href} />
+  </head>
+  <body>
+    <main>
+      <slot />
+    </main>
+    <footer class="site-footer">
+      <div class="container footer-row">
+        <p>{siteMeta.fullTitle}</p>
+      </div>
+    </footer>
+  </body>
+</html>

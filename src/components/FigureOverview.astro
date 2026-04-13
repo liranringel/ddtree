@@ -1,0 +1,336 @@
+---
+import type { FigureEntry } from "../lib/results";
+
+type Props = {
+  entries: FigureEntry[];
+};
+
+const { entries } = Astro.props;
+const payload = JSON.stringify(entries);
+const temperatureOrder = [0.0, 1.0] as const;
+const temperatureLabels: Record<(typeof temperatureOrder)[number], string> = {
+  0.0: "T=0.0",
+  1.0: "T=1.0",
+};
+const modelOrder = ["Qwen3-4B", "Qwen3-8B", "Qwen3-Coder-30B-A3B-Instruct"] as const;
+const modelLabels: Record<(typeof modelOrder)[number], string> = {
+  "Qwen3-4B": "Qwen3-4B",
+  "Qwen3-8B": "Qwen3-8B",
+  "Qwen3-Coder-30B-A3B-Instruct": "Qwen3-30B-MoE",
+};
+const modelKey: Record<(typeof modelOrder)[number], string> = {
+  "Qwen3-4B": "4b",
+  "Qwen3-8B": "8b",
+  "Qwen3-Coder-30B-A3B-Instruct": "30b",
+};
+const mobileDatasetLabels: Record<string, string> = {
+  "MATH-500": "MATH",
+  "GSM8K": "GSM8K",
+  "AIME 2024": "AIME'24",
+  "AIME 2025": "AIME'25",
+  "HumanEval": "H.Eval",
+  "MBPP": "MBPP",
+  "LiveCodeBench": "LiveCode",
+  "SWE-bench Lite": "SWE Lite",
+  "MT-Bench": "MT",
+  "Alpaca": "Alpaca",
+};
+
+const defaultTemperature = temperatureOrder[0];
+const groupedByModel = modelOrder.map((model) => ({
+  model,
+  label: modelLabels[model],
+  key: modelKey[model],
+  valuesByTemperature: temperatureOrder.map((temperature) => ({
+    temperature,
+    key: temperatureLabels[temperature],
+    values: entries.filter((entry) => entry.model === model && entry.temperature === temperature),
+  })),
+}));
+
+const maxSpeedup = Math.max(...entries.map((entry) => entry.ddtreeSpeedup), 1);
+const defaultModel = groupedByModel.at(-1) ?? groupedByModel[0];
+const defaultEntries =
+  defaultModel?.valuesByTemperature.find(({ temperature }) => temperature === defaultTemperature)?.values ?? [];
+const defaultEntry = defaultEntries.reduce(
+  (best, entry) => (entry.ddtreeSpeedup > best.ddtreeSpeedup ? entry : best),
+  defaultEntries[0] ?? { dataset: "", model: "", temperature: defaultTemperature, dflashSpeedup: 0, ddtreeSpeedup: 0 },
+);
+---
+
+<section class="figure-shell">
+  <div class="section-head">
+    <h2>Speedups relative to autoregressive decoding</h2>
+    <p>
+      Speedups across datasets, per model and temperature.
+    </p>
+  </div>
+
+  <div class="figure-controls">
+    <div class="figure-tabs" role="tablist" aria-label="Choose temperature for Figure 1">
+      {
+        temperatureOrder.map((temperature, index) => (
+          <button
+            class={`figure-tab ${index === 0 ? "active" : ""}`}
+            type="button"
+            role="tab"
+            aria-selected={index === 0 ? "true" : "false"}
+            data-temperature-tab={temperature}
+          >
+            {temperatureLabels[temperature]}
+          </button>
+        ))
+      }
+    </div>
+
+    <div class="figure-tabs" role="tablist" aria-label="Choose model for Figure 1">
+      {
+        groupedByModel.map(({ label, key }, index) => (
+          <button
+            class={`figure-tab ${index === groupedByModel.length - 1 ? "active" : ""}`}
+            type="button"
+            role="tab"
+            aria-selected={index === groupedByModel.length - 1 ? "true" : "false"}
+            data-model-tab={key}
+          >
+            {label}
+          </button>
+        ))
+      }
+    </div>
+
+    <div class="figure-summary" aria-live="polite">
+      <span class="summary-dataset" id="figure-summary-dataset">{defaultEntry.dataset}</span>
+      <span class="summary-temp" id="figure-summary-temperature">{temperatureLabels[defaultTemperature]}</span>
+      <span class="summary-model" id="figure-summary-model">{defaultModel?.label}</span>
+      <span class="summary-metric"><strong id="figure-summary-ddtree">{defaultEntry.ddtreeSpeedup.toFixed(2)}x</strong> DDTree</span>
+      <span class="summary-metric"><strong id="figure-summary-dflash">{defaultEntry.dflashSpeedup.toFixed(2)}x</strong> DFlash</span>
+      <span class="summary-metric"><strong id="figure-summary-gain">+{(defaultEntry.ddtreeSpeedup - defaultEntry.dflashSpeedup).toFixed(2)}x</strong> Gain</span>
+    </div>
+  </div>
+
+  <div class="chart-shell figure-chart-shell">
+    <div class="figure-legend">
+      <span><i class="legend-chip dflash"></i>DFlash</span>
+      <span><i class="legend-chip ddtree"></i>DFlash + DDTree</span>
+      <span class="figure-mobile-hint">Swipe chart</span>
+    </div>
+
+    <div class="figure-chart-frame">
+      <div class="figure-y-title">Speedup Relative to Autoregressive Decoding</div>
+      <div class="figure-plot-scroll">
+        <div class="figure-plot">
+          <div class="gridline baseline-one" aria-hidden="true"></div>
+          <div class="gridline line-two" aria-hidden="true"></div>
+          <div class="gridline line-three" aria-hidden="true"></div>
+          <div class="gridline line-four" aria-hidden="true"></div>
+          <div class="gridline line-five" aria-hidden="true"></div>
+          <div class="gridline line-six" aria-hidden="true"></div>
+          <div class="gridline line-seven" aria-hidden="true"></div>
+          <div class="gridline line-eight" aria-hidden="true"></div>
+
+          <div class="y-axis-labels" aria-hidden="true">
+            <span>0</span>
+            <span>1</span>
+            <span>2</span>
+            <span>3</span>
+            <span>4</span>
+            <span>5</span>
+            <span>6</span>
+            <span>7</span>
+            <span>8</span>
+          </div>
+
+          {
+            groupedByModel.flatMap(({ model, key, valuesByTemperature }, modelIndex) =>
+              valuesByTemperature.map(({ temperature, values }, temperatureIndex) => (
+                <div
+                  class={`figure-series ${modelIndex === groupedByModel.length - 1 && temperatureIndex === 0 ? "active" : ""}`}
+                  data-model-series={key}
+                  data-temperature-series={temperature}
+                >
+                  <div class="figure-bars">
+                    {
+                      values.map((entry) => {
+                        const gain = entry.ddtreeSpeedup - entry.dflashSpeedup;
+                        return (
+                          <section class="figure-group">
+                            <div class="figure-top-label">{entry.ddtreeSpeedup.toFixed(1)}×</div>
+                            <button
+                              class="figure-pair"
+                              type="button"
+                              data-dataset={entry.dataset}
+                              data-model={modelLabels[model]}
+                              data-temperature={entry.temperature}
+                              data-ddtree={entry.ddtreeSpeedup}
+                              data-dflash={entry.dflashSpeedup}
+                              data-gain={gain}
+                            >
+                              <span class="figure-bar-wrap">
+                                <span class="figure-bar dflash" style={`height:${(entry.dflashSpeedup / maxSpeedup) * 100}%`}></span>
+                                <span class="figure-bar ddtree" style={`height:${(entry.ddtreeSpeedup / maxSpeedup) * 100}%`}></span>
+                              </span>
+                            </button>
+                            <div class="dataset-label">{entry.dataset}</div>
+                          </section>
+                        );
+                      })
+                    }
+                  </div>
+                </div>
+              )),
+            )
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="figure-mobile-chart">
+      {
+        groupedByModel.flatMap(({ model, key, valuesByTemperature }, modelIndex) =>
+          valuesByTemperature.map(({ temperature, values }, temperatureIndex) => (
+            <div
+              class={`figure-mobile-series ${modelIndex === groupedByModel.length - 1 && temperatureIndex === 0 ? "active" : ""}`}
+              data-model-series-mobile={key}
+              data-temperature-series-mobile={temperature}
+            >
+              <div class="figure-mobile-panels">
+                {
+                  values.map((entry) => {
+                    const gain = entry.ddtreeSpeedup - entry.dflashSpeedup;
+                    return (
+                      <button
+                        class="figure-mobile-pair"
+                        type="button"
+                        data-figure-pair
+                        data-dataset={entry.dataset}
+                        data-model={modelLabels[model]}
+                        data-temperature={entry.temperature}
+                        data-ddtree={entry.ddtreeSpeedup}
+                        data-dflash={entry.dflashSpeedup}
+                        data-gain={gain}
+                      >
+                        <span class="figure-mobile-bars">
+                          <span class="figure-mobile-bar-column">
+                            <span class="figure-mobile-bar dflash" style={`height:${(entry.dflashSpeedup / maxSpeedup) * 100}%`}></span>
+                          </span>
+                          <span class="figure-mobile-bar-column">
+                            <span class="figure-mobile-bar ddtree" style={`height:${(entry.ddtreeSpeedup / maxSpeedup) * 100}%`}></span>
+                          </span>
+                        </span>
+                        <span class="figure-mobile-head">
+                          <span class="figure-mobile-dataset">{mobileDatasetLabels[entry.dataset] ?? entry.dataset}</span>
+                          <span class="figure-mobile-metric">{entry.ddtreeSpeedup.toFixed(1)}×</span>
+                        </span>
+                      </button>
+                    );
+                  })
+                }
+              </div>
+            </div>
+          )),
+        )
+      }
+    </div>
+  </div>
+</section>
+
+<script is:inline define:vars={{ payload }}>
+  const entries = JSON.parse(payload);
+  const temperatureTabs = Array.from(document.querySelectorAll("[data-temperature-tab]"));
+  const tabs = Array.from(document.querySelectorAll("[data-model-tab]"));
+  const series = Array.from(document.querySelectorAll("[data-model-series]"));
+  const mobileSeries = Array.from(document.querySelectorAll("[data-model-series-mobile]"));
+  const pairs = Array.from(document.querySelectorAll(".figure-pair, .figure-mobile-pair"));
+
+  const datasetNode = document.getElementById("figure-summary-dataset");
+  const temperatureNode = document.getElementById("figure-summary-temperature");
+  const modelNode = document.getElementById("figure-summary-model");
+  const ddtreeNode = document.getElementById("figure-summary-ddtree");
+  const dflashNode = document.getElementById("figure-summary-dflash");
+  const gainNode = document.getElementById("figure-summary-gain");
+
+  let activeTemperature = "0";
+  let activeModelKey = "30b";
+  let activePair = null;
+
+  function visiblePairs() {
+    return pairs.filter((pair) => {
+      const desktopSeries = pair.closest("[data-model-series]");
+      const mobilePanel = pair.closest("[data-model-series-mobile]");
+      return (
+        (desktopSeries?.dataset.modelSeries === activeModelKey && desktopSeries?.dataset.temperatureSeries === activeTemperature) ||
+        (mobilePanel?.dataset.modelSeriesMobile === activeModelKey && mobilePanel?.dataset.temperatureSeriesMobile === activeTemperature)
+      );
+    });
+  }
+
+  function setSummary(pair) {
+    activePair = pair;
+    const activeKey = `${pair.dataset.dataset}|${pair.dataset.model}|${pair.dataset.temperature}`;
+    pairs.forEach((item) => item.classList.toggle("active", `${item.dataset.dataset}|${item.dataset.model}|${item.dataset.temperature}` === activeKey));
+    datasetNode.textContent = pair.dataset.dataset;
+    temperatureNode.textContent = `T=${Number(pair.dataset.temperature).toFixed(1)}`;
+    modelNode.textContent = pair.dataset.model;
+    ddtreeNode.textContent = `${Number(pair.dataset.ddtree).toFixed(2)}x`;
+    dflashNode.textContent = `${Number(pair.dataset.dflash).toFixed(2)}x`;
+    gainNode.textContent = `+${Number(pair.dataset.gain).toFixed(2)}x`;
+  }
+
+  function bestVisiblePair() {
+    const currentPairs = visiblePairs();
+    return currentPairs.reduce((best, pair) =>
+      Number(pair.dataset.ddtree) > Number(best.dataset.ddtree) ? pair : best
+    , currentPairs[0]);
+  }
+
+  function applyState(modelKey, temperature) {
+    activeModelKey = modelKey;
+    activeTemperature = temperature;
+
+    for (const tab of temperatureTabs) {
+      const isActive = tab.dataset.temperatureTab === temperature;
+      tab.classList.toggle("active", isActive);
+      tab.setAttribute("aria-selected", String(isActive));
+    }
+
+    for (const tab of tabs) {
+      const isActive = tab.dataset.modelTab === modelKey;
+      tab.classList.toggle("active", isActive);
+      tab.setAttribute("aria-selected", String(isActive));
+    }
+
+    for (const panel of series) {
+      panel.classList.toggle("active", panel.dataset.modelSeries === modelKey && panel.dataset.temperatureSeries === temperature);
+    }
+
+    for (const panel of mobileSeries) {
+      panel.classList.toggle("active", panel.dataset.modelSeriesMobile === modelKey && panel.dataset.temperatureSeriesMobile === temperature);
+    }
+
+    const fallbackPair = bestVisiblePair();
+    if (fallbackPair) {
+      setSummary(fallbackPair);
+    }
+  }
+
+  const initialPair = bestVisiblePair();
+  if (initialPair) {
+    setSummary(initialPair);
+  }
+
+  for (const tab of temperatureTabs) {
+    tab.addEventListener("click", () => applyState(activeModelKey, tab.dataset.temperatureTab));
+  }
+
+  for (const tab of tabs) {
+    tab.addEventListener("click", () => applyState(tab.dataset.modelTab, activeTemperature));
+  }
+
+  for (const pair of pairs) {
+    pair.addEventListener("mouseenter", () => setSummary(pair));
+    pair.addEventListener("focus", () => setSummary(pair));
+  }
+
+  applyState(activeModelKey, activeTemperature);
+</script>
