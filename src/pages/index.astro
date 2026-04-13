@@ -6,6 +6,7 @@ import { getFigureOverviewEntries } from "../lib/results";
 import { siteMeta } from "../lib/site";
 
 const figureEntries = getFigureOverviewEntries();
+const baseUrl = import.meta.env.BASE_URL.endsWith("/") ? import.meta.env.BASE_URL : `${import.meta.env.BASE_URL}/`;
 ---
 
 <Layout title="DDTree" description={siteMeta.description}>
@@ -21,7 +22,7 @@ const figureEntries = getFigureOverviewEntries();
           <a class="button arxiv" href="https://arxiv.org/" target="_blank" rel="noreferrer">
             <img
               class="button-logo arxiv-logo"
-              src={`${import.meta.env.BASE_URL}assets/logos/arxiv-logo-color.png`}
+              src={`${baseUrl}assets/logos/arxiv-logo-color.png`}
               alt="arXiv"
               loading="lazy"
             />
@@ -55,10 +56,10 @@ const figureEntries = getFigureOverviewEntries();
           loop
           playsinline
           controls
-          poster={`${import.meta.env.BASE_URL}assets/project/comparison-example-poster.png`}
+          poster={`${baseUrl}assets/project/comparison-example-poster.png`}
           preload="auto"
         >
-          <source src={`${import.meta.env.BASE_URL}assets/project/comparison-example.mp4`} type="video/mp4" />
+          <source src={`${baseUrl}assets/project/comparison-example.mp4`} type="video/mp4" />
         </video>
         <div class="comparison-video-toolbar" aria-label="Comparison video controls">
           <span class="comparison-video-speed-label">Slow</span>
@@ -115,7 +116,7 @@ const figureEntries = getFigureOverviewEntries();
       <div class="result-figure-grid">
         <figure class="result-figure">
           <img
-            src={`${import.meta.env.BASE_URL}assets/project/math500-budget-tradeoff.png`}
+            src={`${baseUrl}assets/project/math500-budget-tradeoff.png`}
             alt="Budget tradeoff plot on Math500"
             loading="lazy"
           />
@@ -128,7 +129,7 @@ const figureEntries = getFigureOverviewEntries();
         </figure>
         <figure class="result-figure">
           <img
-            src={`${import.meta.env.BASE_URL}assets/project/math500-acceptance-histogram.png`}
+            src={`${baseUrl}assets/project/math500-acceptance-histogram.png`}
             alt="Acceptance histogram on MATH-500"
             loading="lazy"
           />
