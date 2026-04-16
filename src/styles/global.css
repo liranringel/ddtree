@@ -394,6 +394,15 @@ main {
   padding-top: 0.25rem;
 }
 
+.section--citation {
+  padding-top: 0.5rem;
+}
+
+.section--citation .section-head h2 {
+  font-size: clamp(1.35rem, 2.2vw, 1.7rem);
+  line-height: 1.05;
+}
+
 .section-first {
   padding-top: 1.1rem;
 }
@@ -1069,6 +1078,27 @@ main {
   color: var(--muted);
   font-size: 0.92rem;
   line-height: 1.6;
+}
+
+.citation-block {
+  max-width: var(--content-width);
+  border: 1px solid rgba(24, 35, 55, 0.1);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: 0 16px 42px rgba(24, 35, 55, 0.06);
+  overflow: auto;
+}
+
+.citation-block pre {
+  margin: 0;
+  padding: 1.2rem 1.3rem;
+  color: var(--slate);
+  font-size: 0.94rem;
+  line-height: 1.65;
+}
+
+.citation-block code {
+  font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace;
 }
 
 .site-footer {
