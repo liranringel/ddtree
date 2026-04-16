@@ -207,9 +207,14 @@ main {
   height: 1rem;
 }
 
-.paper-mark {
-  width: 1rem;
-  height: 1rem;
+.button-logo {
+  display: block;
+  width: auto;
+  flex: 0 0 auto;
+}
+
+.arxiv-logo {
+  height: 1.22rem;
 }
 
 .button:hover {
@@ -221,14 +226,14 @@ main {
   box-shadow: 0 0 0 3px rgba(24, 35, 55, 0.14);
 }
 
-.button.paper {
+.button.arxiv {
   color: var(--ink);
   background: rgba(255, 255, 255, 0.9);
   border-color: rgba(179, 27, 27, 0.18);
   box-shadow: 0 10px 26px rgba(24, 35, 55, 0.06);
 }
 
-.button.paper:hover {
+.button.arxiv:hover {
   background: rgba(255, 255, 255, 0.98);
   border-color: rgba(179, 27, 27, 0.3);
   box-shadow: 0 14px 28px rgba(24, 35, 55, 0.08);
