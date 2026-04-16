@@ -6,9 +6,13 @@
 </p>
 
 <p align="center">
+  Liran Ringel, Yaniv Romano
+</p>
+
+<p align="center">
   <a href="https://liranringel.github.io/ddtree/">🌐 Project Page</a>
   &nbsp;|&nbsp;
-  <a href="https://liranringel.github.io/ddtree/DDTree.pdf">📄 Paper</a>
+  <a href="https://arxiv.org/abs/2604.12989">📄 Paper</a>
 </p>
 
 ## Setup
@@ -39,4 +43,15 @@ Generate the LaTeX table:
 
 ```bash
 python3 make_latex_table.py
+```
+
+## Citation
+
+```bibtex
+@article{ringel2026ddtree,
+  title={Accelerating Speculative Decoding with Block Diffusion Draft Trees},
+  author={Ringel, Liran and Romano, Yaniv},
+  journal={arXiv preprint arXiv:2604.12989},
+  year={2026}
+}
 ```
