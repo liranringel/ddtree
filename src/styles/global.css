@@ -156,6 +156,14 @@ main {
   }
 }
 
+.hero-authors {
+  margin: 0.8rem 0 0;
+  color: rgba(24, 35, 55, 0.74);
+  font-size: 1.02rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
 .hero-summary,
 .section-head p,
 .copy-block p,
